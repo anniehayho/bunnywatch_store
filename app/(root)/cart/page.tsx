@@ -23,16 +23,33 @@ const Cart = () => {
     email: user?.emailAddresses[0].emailAddress,
     name: user?.fullName,
   };
-
-  const handleCheckout = async () => {
+const handleCheckout = async () => {
     try {
       if (!user) {
         router.push("sign-in");
       } else {
+        const requestBody = {
+          cartItems: cart.cartItems,
+          customer,
+        };
+
+        // Validate the request body
+        if (!Array.isArray(requestBody.cartItems) || typeof requestBody.customer !== 'object') {
+          throw new Error('Invalid request body');
+        }
+
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
           method: "POST",
-          body: JSON.stringify({ cartItems: cart.cartItems, customer }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
         });
+
+        if (!res.ok) {
+          throw new Error(`Server responded with status code ${res.status}`);
+        }
+
         const data = await res.json();
         window.location.href = data.url;
         console.log(data);
